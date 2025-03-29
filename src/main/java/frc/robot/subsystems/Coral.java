@@ -51,8 +51,9 @@ public class Coral extends SubsystemBase {
 
   private LaserCan mLaserCAN;
   private int mm_measurement;
-  private int someNumber;
+  private int someNumber = 10;
   private Boolean coralInRange;
+  private String laserCanMessage;
 
   private SparkMaxConfig LeftMotorConfig;
   private SparkMaxConfig RightMotorConfig;
@@ -107,14 +108,18 @@ public class Coral extends SubsystemBase {
   public void periodic() {
     SmartDashboard.putNumber("Coral/ Speed", mLeftMotor.get());
     readLaserCanMeasurement();
+    SmartDashboard.putString("Laser Can Status", laserCanMessage);
+    SmartDashboard.putBoolean("Has Coral?", hasCoral());
   }
 
   public void readLaserCanMeasurement() {
     LaserCan.Measurement measurement = mLaserCAN.getMeasurement();
     if (measurement != null && measurement.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT) {
       mm_measurement = measurement.distance_mm;
+      laserCanMessage = "The target is " + measurement.distance_mm + "mm away!";
     }
     else {
+      laserCanMessage = "Oh no! The target is out of range, or we can't get a reliable measurement!";
       mm_measurement = -1;
     }
 
@@ -129,7 +134,7 @@ public class Coral extends SubsystemBase {
   }
 
   public Command autoIntake(){
-    return intake().until( ()-> hasCoral());
+    return intake().until( ()-> hasCoral()).handleInterrupt( () -> mLeftMotor.set(0));
   }
 
   public Command autoOutake(){
@@ -137,7 +142,7 @@ public class Coral extends SubsystemBase {
   }
   public Command intake() {
     DriverStation.reportWarning("I AM INTAKINGGG", Thread.currentThread().getStackTrace());
-    return this.runOnce( () -> mLeftMotor.set(0.2));
+    return this.runOnce( () -> mLeftMotor.set(-0.2));
   }
 
   public Command outake() {

@@ -86,12 +86,12 @@ public class RobotContainer {
         OPERATOR.y().onTrue(m_elevator.goToReefLevel(ElevatorState.L3));
 
         //MANUAL INTAKE / OUTAKE
-        // OPERATOR.leftBumper().whileTrue(m_Coral.intake()).onFalse(m_Coral.stop());
+        // OPERATOR.leftBumper().onTrue(m_Coral.intake()).onFalse(m_Coral.stop());
         // OPERATOR.leftTrigger().whileTrue(m_Coral.outake()).onFalse(m_Coral.stop());
 
         //AUTOMATIC INTAKE/OUTAKE 
-        OPERATOR.leftBumper().whileTrue( m_Coral.autoIntake()).onFalse(m_Coral.stop());
-        OPERATOR.leftBumper().whileTrue( m_Coral.autoOutake()).onFalse(m_Coral.stop());
+        OPERATOR.leftBumper().whileTrue( m_Coral.autoIntake().andThen(m_Coral.stop()));
+        // OPERATOR.leftTrigger().whileTrue( m_Coral.autoOutake()).toggleOnFalse(m_Coral.stop());
 
 
         // OPERATOR.leftBumper().whileTrue(m_Coral.outake());
