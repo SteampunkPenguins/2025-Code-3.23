@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 public class SimulatableCANSparkMax extends SparkMax {
   SimDeviceSim mCANSparkMaxSim;
 
-  SimDouble mCANSparkMaxSimAppliedOutput;
+  SimDouble mCANSparkMaxSimAppliedOutput; 
 
   public SimulatableCANSparkMax(int deviceId, MotorType type) {
     super(deviceId, type);

@@ -14,7 +14,9 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
-import frc.robot.simulation.SimulatableCANSparkMax;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+
 
 public class Elevator extends Subsystem {
 
@@ -32,11 +34,16 @@ public class Elevator extends Subsystem {
     return mInstance;
   }
 
-  private SimulatableCANSparkMax mLeftMotor;
+  
   private RelativeEncoder mLeftEncoder;
   private SparkClosedLoopController mLeftPIDController;
+  
+  //SIMULATION
+  //private SimulatableCANSparkMax mLeftMotor;
+  //private SimulatableCANSparkMax mRightMotor;
 
-  private SimulatableCANSparkMax mRightMotor;
+  private SparkMax mLeftMotor;
+  private SparkMax mRightMotor;
 
   private TrapezoidProfile mProfile;
   private TrapezoidProfile.State mCurState = new TrapezoidProfile.State();
@@ -60,7 +67,12 @@ public class Elevator extends Subsystem {
     elevatorConfig.limitSwitch.reverseLimitSwitchEnabled(true);
 
     // LEFT ELEVATOR MOTOR
-    mLeftMotor = new SimulatableCANSparkMax(Constants.Elevator.kElevatorLeftMotorId, MotorType.kBrushless);
+    
+    //SIMULATION
+    //mLeftMotor = new SimulatableCANSparkMax(Constants.Elevator.kElevatorLeftMotorId, MotorType.kBrushless);
+    //mRightMotor = new SimulatableCANSparkMax(Constants.Elevator.kElevatorRightMotorId, MotorType.kBrushless);
+
+    mLeftMotor = new SparkMax(Constants.Elevator.kElevatorLeftMotorId, MotorType.kBrushless);
     mLeftEncoder = mLeftMotor.getEncoder();
     mLeftPIDController = mLeftMotor.getClosedLoopController();
     mLeftMotor.configure(
@@ -69,7 +81,8 @@ public class Elevator extends Subsystem {
         PersistMode.kPersistParameters);
 
     // RIGHT ELEVATOR MOTOR
-    mRightMotor = new SimulatableCANSparkMax(Constants.Elevator.kElevatorRightMotorId, MotorType.kBrushless);
+    
+    mRightMotor = new SparkMax(Constants.Elevator.kElevatorRightMotorId, MotorType.kBrushless);
     mRightMotor.configure(
         elevatorConfig.follow(mLeftMotor, true),
         ResetMode.kResetSafeParameters,

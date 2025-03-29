@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
@@ -33,12 +34,14 @@ public class Algae extends Subsystem {
     DEALGAE,
     GROUND
   }
+  private SparkMax mWristMotor;
+  private SparkMax mIntakeMotor; 
 
-  private SimulatableCANSparkMax mWristMotor;
+  // private SimulatableCANSparkMax mWristMotor;
   private final ProfiledPIDController mWristPIDController;
   private final ArmFeedforward mWristFeedForward;
 
-  private SimulatableCANSparkMax mIntakeMotor;
+  // private SimulatableCANSparkMax mIntakeMotor;
 
   private final REVThroughBoreEncoder mWristAbsEncoder = new REVThroughBoreEncoder(Constants.Algae.kWristEncoderId);
 
@@ -48,7 +51,8 @@ public class Algae extends Subsystem {
     mPeriodicIO = new PeriodicIO();
 
     // WRIST
-    mWristMotor = new SimulatableCANSparkMax(Constants.Algae.kWristMotorId, MotorType.kBrushless);
+    // mWristMotor = new SimulatableCANSparkMax(Constants.Algae.kWristMotorId, MotorType.kBrushless);
+    mWristMotor = new SparkMax(Constants.Algae.kWristMotorId, MotorType.kBrushless);
     SparkMaxConfig wristConfig = new SparkMaxConfig();
     wristConfig
         .idleMode(IdleMode.kCoast)
@@ -77,7 +81,8 @@ public class Algae extends Subsystem {
         Constants.Algae.kWristKA);
 
     // INTAKE
-    mIntakeMotor = new SimulatableCANSparkMax(Constants.Algae.kIntakeMotorId, MotorType.kBrushless);
+    // mIntakeMotor = new SimulatableCANSparkMax(Constants.Algae.kIntakeMotorId, MotorType.kBrushless);
+    mIntakeMotor = new SparkMax(Constants.Algae.kIntakeMotorId, MotorType.kBrushless);
     SparkMaxConfig intakeConfig = new SparkMaxConfig();
 
     intakeConfig

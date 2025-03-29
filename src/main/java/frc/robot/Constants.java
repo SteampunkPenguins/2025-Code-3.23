@@ -11,8 +11,8 @@ public class Constants {
   }
 
   public static class Elevator {
-    public static final int kElevatorLeftMotorId = 14;
-    public static final int kElevatorRightMotorId = 15;
+    public static final int kElevatorLeftMotorId = 14; //3204 UPDATE
+    public static final int kElevatorRightMotorId = 15; //3204 UPDATE
 
     public static final double kP = 0.15;
     public static final double kI = 0;
@@ -37,8 +37,8 @@ public class Constants {
   }
 
   public static class Coral {
-    public static final int kLeftMotorId = 11;
-    public static final int kRightMotorId = 12;
+    public static final int kLeftMotorId = 16; ///3204 UPDATE
+    public static final int kRightMotorId = 17; //3204 UPDATE
 
     public static final int kLaserId = 0;
     public static final int kColorId = 16;
@@ -60,8 +60,8 @@ public class Constants {
 
   public static class Algae {
     // WRIST
-    public static final int kWristMotorId = 13;
-    public static final int kIntakeMotorId = 14;
+    public static final int kWristMotorId = 25;
+    public static final int kIntakeMotorId = 26;
 
     public static final int kWristEncoderId = 9;
 
@@ -95,8 +95,8 @@ public class Constants {
 
   public static class Intake {
     // Motors
-    public static final int kIntakeMotorId = 9;
-    public static final int kPivotMotorId = 10;
+    public static final int kIntakeMotorId = 16;
+    public static final int kPivotMotorId = 17;
 
     // DIO
     public static final int k_pivotEncoderId = 0;
@@ -120,28 +120,28 @@ public class Constants {
   // DIO
 
   // Drivetrain
-  public static class Drive {
-    public static final double kP = 0.0; // 0.00085;
-    public static final double kI = 0.0;
-    public static final double kD = 0.0;
+  // public static class Drive {
+  //   public static final double kP = 0.0; // 0.00085;
+  //   public static final double kI = 0.0;
+  //   public static final double kD = 0.0;
 
-    public static final double kS = 0.1695;// 0.01;
-    public static final double kV = 2.8559;// 2.6;
-    public static final double kA = 0.4864;
+  //   public static final double kS = 0.1695;// 0.01;
+  //   public static final double kV = 2.8559;// 2.6;
+  //   public static final double kA = 0.4864;
 
-    public static final int kFLMotorId = 8;
-    public static final int kBLMotorId = 7;
-    public static final int kFRMotorId = 6;
-    public static final int kBRMotorId = 5;
-  }
+  //   public static final int kFLMotorId = 8;
+  //   public static final int kBLMotorId = 7;
+  //   public static final int kFRMotorId = 6;
+  //   public static final int kBRMotorId = 5;
+  //}
 
-  public static class Field {
-    public static final double k_width = Units.feetToMeters(54.0);
-    public static final double k_length = Units.feetToMeters(27.0);
+  // public static class Field {
+  //   public static final double k_width = Units.feetToMeters(54.0);
+  //   public static final double k_length = Units.feetToMeters(27.0);
 
-    public static final Pose2d redCenterPose2d = new Pose2d(15.19, 5.50, new Rotation2d(Units.degreesToRadians(180.0)));
-    public static final Pose2d blueCenterPose2d = new Pose2d(1.27, 5.50, new Rotation2d(0));
-  }
+  //   public static final Pose2d redCenterPose2d = new Pose2d(15.19, 5.50, new Rotation2d(Units.degreesToRadians(180.0)));
+  //   public static final Pose2d blueCenterPose2d = new Pose2d(1.27, 5.50, new Rotation2d(0));
+  // }
 
   public static class LEDs {
     public static final int k_PWMId = 9;
