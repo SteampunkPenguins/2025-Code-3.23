@@ -12,6 +12,7 @@ import au.grapplerobotics.LaserCan;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 //import edu.wpi.first.wpilibj.util.Color;
 import frc.robot.Constants;
@@ -49,6 +50,10 @@ public class Coral extends SubsystemBase {
   private SparkMax mRightMotor; 
 
   private LaserCan mLaserCAN;
+  private int mm_measurement;
+  private int someNumber;
+  private Boolean coralInRange;
+
   private SparkMaxConfig LeftMotorConfig;
   private SparkMaxConfig RightMotorConfig;
 
@@ -90,7 +95,9 @@ public class Coral extends SubsystemBase {
     try {
       mLaserCAN.setRangingMode(LaserCan.RangingMode.SHORT);
       mLaserCAN.setRegionOfInterest(new LaserCan.RegionOfInterest(8, 8, 16, 16)); // to be tuned
-      mLaser
+      mLaserCAN.setTimingBudget(LaserCan.TimingBudget.TIMING_BUDGET_33MS);
+    } catch(ConfigurationFailedException e) {
+      System.out.println("Configuration failed!" + e);
     }
   }
 
@@ -99,8 +106,35 @@ public class Coral extends SubsystemBase {
   @Override
   public void periodic() {
     SmartDashboard.putNumber("Coral/ Speed", mLeftMotor.get());
+    readLaserCanMeasurement();
   }
 
+  public void readLaserCanMeasurement() {
+    LaserCan.Measurement measurement = mLaserCAN.getMeasurement();
+    if (measurement != null && measurement.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT) {
+      mm_measurement = measurement.distance_mm;
+    }
+    else {
+      mm_measurement = -1;
+    }
+
+  }
+
+  public Boolean hasCoral() {
+    //asign a value to someNumber
+    if ( mm_measurement != -1 && mm_measurement < someNumber) {
+      return true;
+    }
+    else { return false; }
+  }
+
+  public Command autoIntake(){
+    return intake().until( ()-> hasCoral());
+  }
+
+  public Command autoOutake(){
+    return outake().until(  ()-> !hasCoral());
+  }
   public Command intake() {
     DriverStation.reportWarning("I AM INTAKINGGG", Thread.currentThread().getStackTrace());
     return this.runOnce( () -> mLeftMotor.set(0.2));

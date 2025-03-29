@@ -40,7 +40,7 @@ public class Constants {
     public static final int kLeftMotorId = 16; ///3204 UPDATE
     public static final int kRightMotorId = 17; //3204 UPDATE
 
-    public static final int kLaserId = 0;
+    public static final int kLaserId = 20;
     public static final int kColorId = 16;
 
     public static final double kMaxCurrent = 20;
