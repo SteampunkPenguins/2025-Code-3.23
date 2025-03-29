@@ -18,6 +18,8 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.revrobotics.spark.SparkMax;
+
+import au.grapplerobotics.CanBridge;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.cscore.VideoSource;
@@ -40,10 +42,7 @@ public class Robot extends TimedRobot {
 
   //private List<Subsystem> m_allSubsystems = new ArrayList<>();
   //private final Drivetrain m_drive = Drivetrain.getInstance();
-  private final Coral m_coral = Coral.getInstance();
-  private final Algae m_algae = Algae.getInstance();
-  private final Elevator m_elevator = Elevator.getInstance();
-  private final XboxController player = new XboxController(1);
+
 
   boolean scorePressed = false;
   public Robot() {
@@ -51,11 +50,13 @@ public class Robot extends TimedRobot {
     httpCamera = new HttpCamera("Limelight :DDD", "http://10.32.4.208:5800");
     //CameraServer.startAutomaticCapture(0);
     Shuffleboard.getTab("Tab").add(httpCamera);
+    CanBridge.runTCP();
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run(); 
+    SmartDashboard.putData("Commands", CommandScheduler.getInstance());
     //CameraServer.getInstance().addCamera(camera);
     //SmartDashboard.getTab("Tab").add(httpCamera);
     //ShuffleboardTab.putSource(httpCamera);
@@ -94,18 +95,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    if(player.getBButtonPressed()) {
-      m_elevator.goToElevatorStow();
-      SmartDashboard.putString( "Button Pressed!", "B");
-      SmartDashboard.putString( "Elevator Position", "STOW");
-      System.out.println( "Button Pressed!");
-    }
-
-    if(player.getAButtonPressed()){
-      m_elevator.goToElevatorL2();
-      SmartDashboard.putString( "Button Pressed!", "A");
-      SmartDashboard.putString( "Elevator Position", "L2");
-    }
   }
 
   @Override
@@ -124,17 +113,5 @@ public class Robot extends TimedRobot {
 
   @Override
   public void simulationPeriodic() {
-    if(player.getBButtonPressed()) {
-      m_elevator.goToElevatorStow();
-      SmartDashboard.putString( "Button Pressed!", "B");
-      SmartDashboard.putString( "Elevator Position", "STOW");
-      System.out.println( "Button Pressed!");
-    }
-
-    if(player.getAButtonPressed()){
-      m_elevator.goToElevatorL2();
-      SmartDashboard.putString( "Button Pressed!", "A");
-      SmartDashboard.putString( "Elevator Position", "L2");
-    }
   }
 }

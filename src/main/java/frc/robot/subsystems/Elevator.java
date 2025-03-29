@@ -1,8 +1,10 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.signals.ControlModeValue;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
@@ -10,226 +12,174 @@ import com.revrobotics.spark.SparkClosedLoopController.ArbFFUnits;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.MAXMotionConfig.MAXMotionPositionMode;
 
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 
-public class Elevator extends Subsystem {
-
-  /*-------------------------------- Private instance variables ---------------------------------*/
-  private static Elevator mInstance;
-  private PeriodicIO mPeriodicIO;
-
-  // private static final double kPivotCLRampRate = 0.5;
-  // private static final double kCLRampRate = 0.5;
-
-  public static Elevator getInstance() {
-    if (mInstance == null) {
-      mInstance = new Elevator();
-    }
-    return mInstance;
-  }
-
+public class Elevator extends SubsystemBase {
   
-  private RelativeEncoder mLeftEncoder;
-  private SparkClosedLoopController mLeftPIDController;
-  
-  //SIMULATION
-  //private SimulatableCANSparkMax mLeftMotor;
-  //private SimulatableCANSparkMax mRightMotor;
+  private RelativeEncoder mRightEncoder;
+  private SparkClosedLoopController rightElevatorController;
 
   private SparkMax mLeftMotor;
   private SparkMax mRightMotor;
 
-  private TrapezoidProfile mProfile;
-  private TrapezoidProfile.State mCurState = new TrapezoidProfile.State();
-  private TrapezoidProfile.State mGoalState = new TrapezoidProfile.State();
-  private double prevUpdateTime = Timer.getFPGATimestamp();
+  public Elevator() {
+    super("Elevator"); //why does removing this line break it
 
-  private Elevator() {
-    super("Elevator");
+    // KEEP MASTER MOTOR TO RIGHT ELEVATOR MOTOR
 
-    mPeriodicIO = new PeriodicIO();
+    mRightMotor = new SparkMax(Constants.Elevator.kElevatorRightMotorId, MotorType.kBrushless);
+    mLeftMotor = new SparkMax(Constants.Elevator.kElevatorLeftMotorId, MotorType.kBrushless);
 
     SparkMaxConfig elevatorConfig = new SparkMaxConfig();
+    SparkMaxConfig rightElevatorMotorConfig = new SparkMaxConfig();
+    SparkMaxConfig leftElevatorMotorConfig = new SparkMaxConfig();
 
-    elevatorConfig.closedLoop
+    rightElevatorMotorConfig.closedLoop
         .pid(Constants.Elevator.kP, Constants.Elevator.kI, Constants.Elevator.kD)
         .iZone(Constants.Elevator.kIZone);
 
+    rightElevatorController = mRightMotor.getClosedLoopController(); // ????
+
     elevatorConfig.smartCurrentLimit(Constants.Elevator.kMaxCurrent);
-
     elevatorConfig.idleMode(IdleMode.kBrake);
-    elevatorConfig.limitSwitch.reverseLimitSwitchEnabled(true);
 
-    // LEFT ELEVATOR MOTOR
+    rightElevatorMotorConfig.apply(elevatorConfig).inverted(true);
+    leftElevatorMotorConfig.apply(elevatorConfig).follow(mRightMotor, true);
+
+    // mRightEncoder.setPosition(0);
+    mRightEncoder = mRightMotor.getEncoder();
     
-    //SIMULATION
-    //mLeftMotor = new SimulatableCANSparkMax(Constants.Elevator.kElevatorLeftMotorId, MotorType.kBrushless);
-    //mRightMotor = new SimulatableCANSparkMax(Constants.Elevator.kElevatorRightMotorId, MotorType.kBrushless);
+   
 
-    mLeftMotor = new SparkMax(Constants.Elevator.kElevatorLeftMotorId, MotorType.kBrushless);
-    mLeftEncoder = mLeftMotor.getEncoder();
-    mLeftPIDController = mLeftMotor.getClosedLoopController();
+    //MOTORS GET CONFIGURED HERE
     mLeftMotor.configure(
-        elevatorConfig,
+        leftElevatorMotorConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
 
     // RIGHT ELEVATOR MOTOR
     
-    mRightMotor = new SparkMax(Constants.Elevator.kElevatorRightMotorId, MotorType.kBrushless);
     mRightMotor.configure(
-        elevatorConfig.follow(mLeftMotor, true),
+        rightElevatorMotorConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
-
-    mProfile = new TrapezoidProfile(
-        new TrapezoidProfile.Constraints(
-            Constants.Elevator.kMaxVelocity,
-            Constants.Elevator.kMaxAcceleration));
   }
 
-  public enum ElevatorState {
-    NONE,
-    STOW,
-    L2,
-    L3,
-    L4,
-    A1,
-    A2
+  public static enum ElevatorState {
+    //put positions within these parameters, maybe pull from your constants?
+    TEST(0),
+    STOW(0),
+    L2(10),
+    L3(26),
+    L4(0),
+    A1(0),
+    A2(0);
+
+    private final double e_position;
+
+    private ElevatorState(double e) {
+      this.e_position = e;
+    }
+
+    public double getElevatorPosition() {
+      return this.e_position;
+    }
   }
 
-  private static class PeriodicIO {
-    double elevator_target = 0.0;
-    double elevator_power = 0.0;
-
-    boolean is_elevator_pos_control = false;
-
-    ElevatorState state = ElevatorState.STOW;
-  }
 
   /*-------------------------------- Generic Subsystem Functions --------------------------------*/
 
   @Override
   public void periodic() {
-    // TODO: Use this pattern to only drive slowly when we're really high up
-    // if(mPivotEncoder.getPosition() > Constants.kPivotScoreCount) {
-    // mPeriodicIO.is_pivot_low = true;
-    // } else {
-    // mPeriodicIO.is_pivot_low = false;
-    // }
+    SmartDashboard.putNumber("Elevator/Position", mRightMotor.getEncoder().getPosition());
+    SmartDashboard.putNumber("Velocity/Current", mRightEncoder.getVelocity());
+
+    SmartDashboard.putNumber("Elevator/Left Motor Current", mLeftMotor.getOutputCurrent());
+    SmartDashboard.putNumber("Current/Right", mRightMotor.getOutputCurrent());
+
+    SmartDashboard.putNumber("Output/Left", mLeftMotor.getAppliedOutput());
+    SmartDashboard.putNumber("Output/Right", mRightMotor.getAppliedOutput());
   }
 
-  @Override
-  public void writePeriodicOutputs() {
-    double curTime = Timer.getFPGATimestamp();
-    double dt = curTime - prevUpdateTime;
-    prevUpdateTime = curTime;
-    if (mPeriodicIO.is_elevator_pos_control) {
-      // Update goal
-      mGoalState.position = mPeriodicIO.elevator_target;
-
-      // Calculate new state
-      prevUpdateTime = curTime;
-      mCurState = mProfile.calculate(dt, mCurState, mGoalState);
-
-      // Set PID controller to new state
-      mLeftPIDController.setReference(
-          mCurState.position,
-          SparkBase.ControlType.kPosition,
-          ClosedLoopSlot.kSlot0,
-          Constants.Elevator.kG,
-          ArbFFUnits.kVoltage);
-    } else {
-      mCurState.position = mLeftEncoder.getPosition();
-      mCurState.velocity = 0;
-      mLeftMotor.set(mPeriodicIO.elevator_power);
-    }
+  public void setReferenceToPoint(double position) {
+    rightElevatorController.setReference(position, ControlType.kPosition);
   }
 
-  @Override
-  public void stop() {
-    mPeriodicIO.is_elevator_pos_control = false;
-    mPeriodicIO.elevator_power = 0.0;
-
-    mLeftMotor.set(0.0);
+  public Command setSpeeds(double speed) {
+    DriverStation.reportWarning("I am running!!!!!!!!!!!!!!!!!!!!", Thread.currentThread().getStackTrace());
+    return this.runOnce( () -> mRightMotor.set(speed));
   }
 
-  @Override
-  public void outputTelemetry() {
-    putNumber("Position/Current", mLeftEncoder.getPosition());
-    putNumber("Position/Target", mPeriodicIO.elevator_target);
-    putNumber("Velocity/Current", mLeftEncoder.getVelocity());
 
-    putNumber("Position/Setpoint", mCurState.position);
-    putNumber("Velocity/Setpoint", mCurState.velocity);
-
-    putNumber("Current/Left", mLeftMotor.getOutputCurrent());
-    putNumber("Current/Right", mRightMotor.getOutputCurrent());
-
-    putNumber("Output/Left", mLeftMotor.getAppliedOutput());
-    putNumber("Output/Right", mRightMotor.getAppliedOutput());
-
-    putNumber("State", mPeriodicIO.state);
+  public Command stopElevator() {
+    DriverStation.reportWarning("I am stopping!!!!!!!!!!!!!!", Thread.currentThread().getStackTrace());
+    return this.runOnce( ()-> mRightMotor.set(0));
   }
 
-  @Override
-  public void reset() {
-    mLeftEncoder.setPosition(0.0);
+  public Command goToReefLevel( ElevatorState position) {
+    return this.runOnce( () -> rightElevatorController.setReference(position.e_position, ControlType.kPosition));
+    
   }
+
 
   /*---------------------------------- Custom Public Functions ----------------------------------*/
 
-  public ElevatorState getState() {
-    return mPeriodicIO.state;
-  }
+  // public ElevatorState getState() {
+  //   return mPeriodicIO.state;
+  // }
 
-  public void setElevatorPower(double power) {
-    putNumber("setElevatorPower", power);
-    mPeriodicIO.is_elevator_pos_control = false;
-    mPeriodicIO.elevator_power = power;
-  }
+  // public void setElevatorPower(double power) {
+  //   putNumber("setElevatorPower", power);
+  //   mPeriodicIO.is_elevator_pos_control = false;
+  //   mPeriodicIO.elevator_power = power;
+  // }
 
-  public void goToElevatorStow() {
-    mPeriodicIO.is_elevator_pos_control = true;
-    mPeriodicIO.elevator_target = Constants.Elevator.kStowHeight;
-    mPeriodicIO.state = ElevatorState.STOW;
-  }
+  // public void goToElevatorStow() {
+  //   mPeriodicIO.is_elevator_pos_control = true;
+  //   mPeriodicIO.elevator_target = Constants.Elevator.kStowHeight;
+  //   mPeriodicIO.state = ElevatorState.STOW;
+  // }
 
-  public void goToElevatorL2() {
-    mPeriodicIO.is_elevator_pos_control = true;
-    mPeriodicIO.elevator_target = Constants.Elevator.kL2Height;
-    mPeriodicIO.state = ElevatorState.L2;
-  }
+  // public void goToElevatorL2() {
+  //   mPeriodicIO.is_elevator_pos_control = true;
+  //   mPeriodicIO.elevator_target = Constants.Elevator.kL2Height;
+  //   mPeriodicIO.state = ElevatorState.L2;
+  // }
 
-  public void goToElevatorL3() {
-    mPeriodicIO.is_elevator_pos_control = true;
-    mPeriodicIO.elevator_target = Constants.Elevator.kL3Height;
-    mPeriodicIO.state = ElevatorState.L3;
-  }
+  // public void goToElevatorL3() {
+  //   mPeriodicIO.is_elevator_pos_control = true;
+  //   mPeriodicIO.elevator_target = Constants.Elevator.kL3Height;
+  //   mPeriodicIO.state = ElevatorState.L3;
+  // }
 
-  public void goToElevatorL4() {
-    mPeriodicIO.is_elevator_pos_control = true;
-    mPeriodicIO.elevator_target = Constants.Elevator.kL4Height;
-    mPeriodicIO.state = ElevatorState.L4;
-  }
+  // public void goToElevatorL4() {
+  //   mPeriodicIO.is_elevator_pos_control = true;
+  //   mPeriodicIO.elevator_target = Constants.Elevator.kL4Height;
+  //   mPeriodicIO.state = ElevatorState.L4;
+  // }
 
-  public void goToAlgaeLow() {
-    mPeriodicIO.is_elevator_pos_control = true;
-    mPeriodicIO.elevator_target = Constants.Elevator.kLowAlgaeHeight;
-    mPeriodicIO.state = ElevatorState.A1;
-  }
+  // public void goToAlgaeLow() {
+  //   mPeriodicIO.is_elevator_pos_control = true;
+  //   mPeriodicIO.elevator_target = Constants.Elevator.kLowAlgaeHeight;
+  //   mPeriodicIO.state = ElevatorState.A1;
+  // }
 
-  public void goToAlgaeHigh() {
-    mPeriodicIO.is_elevator_pos_control = true;
-    mPeriodicIO.elevator_target = Constants.Elevator.kHighAlgaeHeight;
-    mPeriodicIO.state = ElevatorState.A2;
-  }
-
+  // public void goToAlgaeHigh() {
+  //   mPeriodicIO.is_elevator_pos_control = true;
+  //   mPeriodicIO.elevator_target = Constants.Elevator.kHighAlgaeHeight;
+  //   mPeriodicIO.state = ElevatorState.A2;
+  // }
   /*---------------------------------- Custom Private Functions ---------------------------------*/
 }

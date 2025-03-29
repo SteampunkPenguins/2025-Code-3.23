@@ -60,8 +60,8 @@ public class Constants {
 
   public static class Algae {
     // WRIST
-    public static final int kWristMotorId = 25;
-    public static final int kIntakeMotorId = 26;
+    public static final int kWristMotorId = 18;
+    public static final int kIntakeMotorId = 19;
 
     public static final int kWristEncoderId = 9;
 

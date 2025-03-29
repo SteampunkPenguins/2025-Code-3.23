@@ -14,9 +14,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Coral;
+import frc.robot.subsystems.Elevator;
+import frc.robot.subsystems.Elevator.ElevatorState;
 
 public class RobotContainer {
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -32,11 +34,17 @@ public class RobotContainer {
     private final Telemetry logger = new Telemetry(MaxSpeed);
 
     private final CommandXboxController joystick = new CommandXboxController(0);
+    private final CommandXboxController OPERATOR = new CommandXboxController(1);
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
+    private Elevator m_elevator = new Elevator();
+    private Coral m_Coral = new Coral();
+
+
     public RobotContainer() {
         configureBindings();
+        configureOperatorBindings(); //organize this better later
     }
 
     private void configureBindings() {
@@ -67,6 +75,26 @@ public class RobotContainer {
         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
         drivetrain.registerTelemetry(logger::telemeterize);
+    }
+
+    private void configureOperatorBindings(){
+        OPERATOR.povUp().whileTrue(m_elevator.setSpeeds(0.2)).toggleOnFalse(m_elevator.stopElevator());
+        OPERATOR.povDown().whileTrue(m_elevator.setSpeeds(-0.2)).toggleOnFalse(m_elevator.stopElevator());
+
+        OPERATOR.a().onTrue(m_elevator.goToReefLevel(ElevatorState.STOW));
+        OPERATOR.b().onTrue(m_elevator.goToReefLevel(ElevatorState.L2));
+        OPERATOR.y().onTrue(m_elevator.goToReefLevel(ElevatorState.L3));
+
+        //MANUAL INTAKE / OUTAKE
+        // OPERATOR.leftBumper().whileTrue(m_Coral.intake()).onFalse(m_Coral.stop());
+        // OPERATOR.leftTrigger().whileTrue(m_Coral.outake()).onFalse(m_Coral.stop());
+
+        //AUTOMATIC INTAKE/OUTAKE 
+        OPERATOR.leftBumper().whileTrue( m_Coral.autoIntake()).onFalse(m_Coral.stop());
+        OPERATOR.leftBumper().whileTrue( m_Coral.autoOutake()).onFalse(m_Coral.stop());
+
+
+        // OPERATOR.leftBumper().whileTrue(m_Coral.outake());
     }
 
     public Command getAutonomousCommand() {
