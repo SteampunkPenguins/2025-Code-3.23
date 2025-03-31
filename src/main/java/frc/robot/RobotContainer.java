@@ -9,7 +9,11 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -41,8 +45,13 @@ public class RobotContainer {
     private Elevator m_elevator = new Elevator();
     private Coral m_Coral = new Coral();
 
+/* Path follower */
+    private final SendableChooser<Command> autoChooser;
 
     public RobotContainer() {
+        autoChooser = AutoBuilder.buildAutoChooser("Tests");
+        SmartDashboard.putData("Auto Mode", autoChooser);
+
         configureBindings();
         configureOperatorBindings(); //organize this better later
     }
@@ -90,7 +99,7 @@ public class RobotContainer {
         // OPERATOR.leftTrigger().whileTrue(m_Coral.outake()).onFalse(m_Coral.stop());
 
         //AUTOMATIC INTAKE/OUTAKE 
-        OPERATOR.leftBumper().whileTrue( m_Coral.autoIntake().andThen(m_Coral.stop()));
+        OPERATOR.leftBumper().whileTrue( m_Coral.autoIntake().andThen(m_Coral.stop())); //Logic needs debugging
         // OPERATOR.leftTrigger().whileTrue( m_Coral.autoOutake()).toggleOnFalse(m_Coral.stop());
 
 
@@ -98,6 +107,9 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        return Commands.print("No autonomous command configured");
+        /* Run the path selected from the auto chooser */
+        return autoChooser.getSelected();
+        
+        //return Commands.print("No autonomous command configured");
     }
 }
