@@ -51,7 +51,7 @@ public class Coral extends SubsystemBase {
 
   private LaserCan mLaserCAN;
   private int mm_measurement;
-  private int someNumber = 10;
+  private int someNumber = 4;
   private Boolean coralInRange;
   private String laserCanMessage;
 
@@ -122,7 +122,6 @@ public class Coral extends SubsystemBase {
       laserCanMessage = "Oh no! The target is out of range, or we can't get a reliable measurement!";
       mm_measurement = -1;
     }
-
   }
 
   public Boolean hasCoral() {
@@ -133,22 +132,14 @@ public class Coral extends SubsystemBase {
     else { return false; }
   }
 
-  public Command autoIntake(){
-    return intake().until( ()-> hasCoral()).handleInterrupt( () -> mLeftMotor.set(0));
-  }
-
-  public Command autoOutake(){
-    return outake().until(  ()-> !hasCoral());
-  }
   public Command intake() {
     DriverStation.reportWarning("I AM INTAKINGGG", Thread.currentThread().getStackTrace());
-    return this.runOnce( () -> mLeftMotor.set(-0.2));
+     return this.runOnce( () -> mLeftMotor.set(-0.2));
   }
 
   public Command outake() {
     DriverStation.reportWarning("I AM OUTAKINGGG", Thread.currentThread().getStackTrace());
-    return this.runOnce( ()-> mLeftMotor.set(-0.7));
-    
+    return this.runOnce( ()-> mLeftMotor.set(-.7));
   }
 
   public Command stop() {

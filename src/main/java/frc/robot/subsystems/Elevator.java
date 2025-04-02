@@ -80,7 +80,7 @@ public class Elevator extends SubsystemBase {
   public static enum ElevatorState {
     //put positions within these parameters, maybe pull from your constants?
     TEST(0),
-    STOW(0),
+    STOW(2),
     L2(10),
     L3(26),
     L4(0),

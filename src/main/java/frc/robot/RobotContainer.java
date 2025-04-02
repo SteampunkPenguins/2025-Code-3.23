@@ -12,8 +12,10 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Coral;
@@ -23,7 +25,7 @@ import frc.robot.subsystems.Elevator.ElevatorState;
 public class RobotContainer {
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
-
+    
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
@@ -45,6 +47,8 @@ public class RobotContainer {
     public RobotContainer() {
         configureBindings();
         configureOperatorBindings(); //organize this better later
+
+        
     }
 
     private void configureBindings() {
@@ -86,15 +90,14 @@ public class RobotContainer {
         OPERATOR.y().onTrue(m_elevator.goToReefLevel(ElevatorState.L3));
 
         //MANUAL INTAKE / OUTAKE
-        // OPERATOR.leftBumper().onTrue(m_Coral.intake()).onFalse(m_Coral.stop());
-        // OPERATOR.leftTrigger().whileTrue(m_Coral.outake()).onFalse(m_Coral.stop());
+        OPERATOR.leftTrigger().onTrue(m_Coral.intake()).onFalse(m_Coral.stop());
+        OPERATOR.rightTrigger().onTrue(m_Coral.outake()).toggleOnFalse(m_Coral.stop());
 
-        //AUTOMATIC INTAKE/OUTAKE 
-        OPERATOR.leftBumper().whileTrue( m_Coral.autoIntake().andThen(m_Coral.stop()));
-        // OPERATOR.leftTrigger().whileTrue( m_Coral.autoOutake()).toggleOnFalse(m_Coral.stop());
-
-
-        // OPERATOR.leftBumper().whileTrue(m_Coral.outake());
+        //INTAKE / OUTAKE with Sensor
+        Trigger inTakeTrigger = OPERATOR.leftBumper().and((()->!m_Coral.hasCoral()));
+        Trigger outTakeTrigger = OPERATOR.rightBumper().and((()->m_Coral.hasCoral()));
+        inTakeTrigger.onTrue(m_Coral.intake()).onFalse(m_Coral.stop());
+        outTakeTrigger.onTrue(m_Coral.outake()).onFalse(m_Coral.stop());
     }
 
     public Command getAutonomousCommand() {
